@@ -5,6 +5,7 @@ using BepInEx.IL2CPP;
 using UnityEngine;
 using HarmonyLib;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace RF5NoHat {
 	[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -55,7 +56,11 @@ namespace RF5NoHat {
 			if (!eShowHairpin.Value) equipmentBlacklist.Add(HumanAttachIDEnum.Hairpin);
 			if (!eShowHat.Value) equipmentBlacklist.Add(HumanAttachIDEnum.Hat);
 			if (!eShowHeadband.Value) equipmentBlacklist.Add(HumanAttachIDEnum.Headband);
-			if (!eShowRibbon.Value) equipmentBlacklist.Add(HumanAttachIDEnum.Shield);
+			if (!eShowRibbon.Value) equipmentBlacklist.Add(HumanAttachIDEnum.Ribbon);
+			if (!eShowShield.Value) {
+				equipmentBlacklist.Add(HumanAttachIDEnum.Shield);
+				Harmony.CreateAndPatchAll(typeof(RF5NoShield));
+			}
 
 			outfitBlacklist = new List<HumanJointIDEnum>();
 
@@ -64,6 +69,18 @@ namespace RF5NoHat {
 			if (!oShowTophair.Value) outfitBlacklist.Add(HumanJointIDEnum.TopHair01);
 
 			Harmony.CreateAndPatchAll(typeof(RF5NoHat));
+		}
+
+		[HarmonyPatch]
+		public class RF5NoShield {
+			[HarmonyPatch(typeof(HumanEquipment), nameof(HumanEquipment.SetVisible))]
+			[HarmonyPrefix]
+			public static void HideShield(EquipSlotType slot_type, ref bool visible) {
+				if (slot_type == EquipSlotType.Shield) {
+					visible = false;
+					//Log.LogInfo($"Force hide shield");
+				}
+			}
 		}
 
 		[HarmonyPatch]
@@ -84,7 +101,7 @@ namespace RF5NoHat {
 			}
 
 			[HarmonyPatch(typeof(HumanModel), nameof(HumanModel.Update))]
-			[HarmonyPostfix]
+			[HarmonyPrefix]
 			public static void HideOutfitatStart(HumanModel __instance) {
 				outfitBlacklist.ForEach(x => { if (__instance.IsJointVisible(x)) { __instance.JointVisible(x, false); Log.LogInfo($"{x} hidden"); } });
 			}
