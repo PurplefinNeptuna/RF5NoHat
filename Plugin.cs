@@ -1,11 +1,10 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
-using BepInEx.IL2CPP;
-using UnityEngine;
+using BepInEx.Unity.IL2CPP;
 using HarmonyLib;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RF5NoHat {
 	[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -94,7 +93,7 @@ namespace RF5NoHat {
 
 			[HarmonyPatch(typeof(HumanModelSocket), nameof(HumanModelSocket.Attach))]
 			[HarmonyPrefix]
-			public static void HideHatCostume(UnhollowerBaseLib.Il2CppReferenceArray<HumanJoint> joints) {
+			public static void HideHatCostume(Il2CppReferenceArray<HumanJoint> joints) {
 				foreach (var joint in joints) {
 					outfitBlacklist.ForEach(x => { if (joint.JointId == x) { joint.Active = false; Log.LogInfo($"{x} hidden"); } });
 				}
