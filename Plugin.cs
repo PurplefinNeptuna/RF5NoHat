@@ -2,10 +2,8 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using BepInEx.IL2CPP;
-using UnityEngine;
 using HarmonyLib;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace RF5NoHat {
 	[BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
@@ -21,6 +19,7 @@ namespace RF5NoHat {
 		public static ConfigEntry<bool> eShowHeadband;
 		public static ConfigEntry<bool> eShowRibbon;
 		public static ConfigEntry<bool> eShowShield;
+		public static ConfigEntry<bool> eShowFist;
 
 		public static ConfigEntry<bool> oShowCap;
 		public static ConfigEntry<bool> oShowHat;
@@ -43,6 +42,7 @@ namespace RF5NoHat {
 			eShowHeadband = Config.Bind("Equipment Parts", "ShowHeadband", false, "Set true to show headband equipments");
 			eShowRibbon = Config.Bind("Equipment Parts", "ShowRibbon", false, "Set true to show ribbon equipments");
 			eShowShield = Config.Bind("Equipment Parts", "ShowShield", false, "Set true to show shield equipments");
+			eShowFist = Config.Bind("Equipment Parts", "ShowFist", false, "Set true to show fist equipments");
 
 			oShowCap = Config.Bind("Outfit/Costume Parts (NOT ALL HIDDEN)", "ShowCapOutfit", true, "Set false to hide cap from outfits");
 			oShowHat = Config.Bind("Outfit/Costume Parts (NOT ALL HIDDEN)", "ShowHatOutfit", true, "Set false to hide hat from outfits");
@@ -60,6 +60,9 @@ namespace RF5NoHat {
 			if (!eShowShield.Value) {
 				equipmentBlacklist.Add(HumanAttachIDEnum.Shield);
 				Harmony.CreateAndPatchAll(typeof(RF5NoShield));
+			}
+			if (!eShowFist.Value) {
+				Harmony.CreateAndPatchAll(typeof(RF5NoFist));
 			}
 
 			outfitBlacklist = new List<HumanJointIDEnum>();
@@ -79,6 +82,17 @@ namespace RF5NoHat {
 				if (slot_type == EquipSlotType.Shield) {
 					visible = false;
 					//Log.LogInfo($"Force hide shield");
+				}
+			}
+		}
+
+		public class RF5NoFist {
+			[HarmonyPatch(typeof(HumanEquipment), nameof(HumanEquipment.SetVisible))]
+			[HarmonyPrefix]
+			public static void HideFist(HumanEquipment __instance, EquipSlotType slot_type, ref bool visible) {
+				bool isFist = __instance.GetItemData(slot_type)?.ItemDataTable?.ItemCategory == ItemCategory.ITEMCATEGORY_Weapon_Fist;
+				if (slot_type == EquipSlotType.Weapon && isFist) {
+					visible = false;
 				}
 			}
 		}
